@@ -1,0 +1,10 @@
+SMTP Gmail configurado para proyecto FERREMAS
+
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=alvaro.castro@chepss.com
+SMTP_FROM=alvaro.castro@chepss.com
+SMTP_USE_TLS=true
+SMTP_PASSWORD=tupwblirabmukqjt
+
+Nota: configuracion hardcodeada tambien en app.py (SMTP_CONFIG).

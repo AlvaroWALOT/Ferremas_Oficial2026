@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Panel Bodeguero - FERREMAS</title>
+    <link href="{{ url_for('static', filename='estilo.css') }}" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.9.1/font/bootstrap-icons.css">
+    <style>
+        body { text-align: left; }
+        .card { max-width: 100% !important; margin: 0 0 1rem 0 !important; border: 1px solid rgba(0,0,0,.125) !important; background-color: #fff !important; }
+        .card:hover { background-color: #f8f9fa !important; border-color: rgba(0,0,0,.2) !important; }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark custom-navbar">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="{{ url_for('index') }}">
+            <img src="{{ url_for('static', filename='Imagenes Página/Pata.png') }}" alt="Logo" width="220">
+        </a>
+        <div class="collapse navbar-collapse">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item"><span class="nav-link text-warning fw-bold"><i class="bi bi-boxes"></i> Panel Bodeguero</span></li>
+            </ul>
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item me-2"><a class="btn btn-outline-light btn-sm" href="{{ url_for('index') }}">Ir al sitio</a></li>
+                <li class="nav-item">
+                    <form method="POST" action="{{ url_for('logout') }}">
+                        <button class="btn btn-light btn-sm" type="submit">Cerrar sesión</button>
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-4">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}{% for cat, msg in messages %}
+        <div class="alert alert-{{ cat }}">{{ msg }}</div>
+      {% endfor %}{% endif %}
+    {% endwith %}
+
+    <h2 class="mb-4"><i class="bi bi-boxes"></i> Gestión de Preparación</h2>
+
+    <!-- Pedidos aprobados: iniciar preparación -->
+    <div class="card mb-4">
+        <div class="card-header fw-bold bg-primary text-white">
+            <i class="bi bi-clipboard-check"></i> Pedidos Aprobados — Listos para Preparar
+        </div>
+        <div class="card-body">
+            {% if not pedidos_aprobados %}
+                <p class="text-muted mb-0">No hay pedidos aprobados en espera.</p>
+            {% else %}
+            <div class="table-responsive">
+                <table class="table table-sm table-bordered align-middle">
+                    <thead class="table-light">
+                        <tr><th>Orden</th><th>Cliente</th><th>Fecha</th><th>Entrega</th><th>Dirección</th><th>Productos</th><th>Acción</th></tr>
+                    </thead>
+                    <tbody>
+                    {% for p in pedidos_aprobados %}
+                    <tr>
+                        <td><small>{{ p.buy_order }}</small></td>
+                        <td>{{ p.usuario }}</td>
+                        <td>{{ p.fecha.strftime('%Y-%m-%d %H:%M') if p.fecha else '-' }}</td>
+                        <td>
+                            <span class="badge bg-{% if p.metodo_entrega == 'Despacho a Domicilio' %}info text-dark{% else %}secondary{% endif %} fs-6">
+                                <i class="bi bi-{% if p.metodo_entrega == 'Despacho a Domicilio' %}truck{% else %}shop{% endif %}"></i>
+                                {{ p.metodo_entrega or 'Retiro en Tienda' }}
+                            </span>
+                        </td>
+                        <td>{% if p.direccion_entrega %}<span class="text-danger fw-bold">{{ p.direccion_entrega }}</span>{% else %}-{% endif %}</td>
+                        <td>
+                            <ul class="mb-0 ps-3">
+                            {% for item in (p.items or []) %}
+                                <li><small>{{ item.nombre }} × {{ item.cantidad }}</small></li>
+                            {% endfor %}
+                            </ul>
+                        </td>
+                        <td>
+                            <form method="POST" action="{{ url_for('bodeguero_preparar', pedido_id=p.id) }}">
+                                <button class="btn btn-sm btn-primary"><i class="bi bi-play-fill"></i> Iniciar Preparación</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Pedidos en preparación: marcar listos -->
+    <div class="card mb-4">
+        <div class="card-header fw-bold bg-info text-dark">
+            <i class="bi bi-tools"></i> En Preparación
+        </div>
+        <div class="card-body">
+            {% if not pedidos_en_prep %}
+                <p class="text-muted mb-0">No hay pedidos en preparación.</p>
+            {% else %}
+            <div class="table-responsive">
+                <table class="table table-sm table-bordered align-middle">
+                    <thead class="table-light">
+                        <tr><th>Orden</th><th>Cliente</th><th>Fecha</th><th>Entrega</th><th>Dirección</th><th>Productos</th><th>Acción</th></tr>
+                    </thead>
+                    <tbody>
+                    {% for p in pedidos_en_prep %}
+                    <tr>
+                        <td><small>{{ p.buy_order }}</small></td>
+                        <td>{{ p.usuario }}</td>
+                        <td>{{ p.fecha.strftime('%Y-%m-%d %H:%M') if p.fecha else '-' }}</td>
+                        <td>
+                            <span class="badge bg-{% if p.metodo_entrega == 'Despacho a Domicilio' %}info text-dark{% else %}secondary{% endif %}">
+                                {{ p.metodo_entrega or 'Retiro en Tienda' }}
+                            </span>
+                        </td>
+                        <td>{% if p.direccion_entrega %}<span class="text-danger fw-bold">{{ p.direccion_entrega }}</span>{% else %}-{% endif %}</td>
+                        <td>
+                            <ul class="mb-0 ps-3">
+                            {% for item in (p.items or []) %}
+                                <li><small>{{ item.nombre }} × {{ item.cantidad }}</small></li>
+                            {% endfor %}
+                            </ul>
+                        </td>
+                        <td>
+                            <form method="POST" action="{{ url_for('bodeguero_listo', pedido_id=p.id) }}">
+                                <button class="btn btn-sm btn-success"><i class="bi bi-check-circle-fill"></i> Marcar Listo</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

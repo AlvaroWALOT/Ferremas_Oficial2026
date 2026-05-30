@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Mi Perfil - FERREMAS</title>
+    <link href="{{ url_for('static', filename='estilo.css') }}" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.9.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark custom-navbar">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{{ url_for('index') }}">
+                <img src="{{ url_for('static', filename='Imagenes Página/Pata.png') }}" alt="Logo" width="300">
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown"
+            aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNavDropdown">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('index') }}">Inicio</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('tienda') }}">Tienda</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('ver_carrito') }}">Carrito</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('contact') }}">Contacto</a>
+                    </li>
+                </ul>
+                {% if usuario_logueado %}
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="btn btn-outline-light btn-sm" href="{{ url_for('mi_perfil') }}">Mi Perfil</a>
+                    </li>
+                    <li class="nav-item ms-2">
+                        <form method="POST" action="{{ url_for('logout') }}">
+                            <button class="btn btn-light btn-sm" type="submit">Cerrar sesion</button>
+                        </form>
+                    </li>
+                </ul>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <h2>Mi Perfil</h2>
+        <p><strong>Usuario:</strong> {{ usuario_nombre }}</p>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <h4 class="mt-4">Historial de Compras</h4>
+
+        {% if compras %}
+            <div class="table-responsive mt-3">
+                <table class="table table-striped table-bordered align-middle text-start">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Orden</th>
+                            <th>Fecha</th>
+                            <th>Metodo</th>
+                            <th>Estado</th>
+                            <th>Moneda</th>
+                            <th>Monto Total</th>
+                            <th>Accion</th>
+                            <th>Detalle</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for compra in compras %}
+                        <tr>
+                            <td><strong>{{ compra.buy_order }}</strong></td>
+                            <td>{{ compra.fecha.strftime('%d-%m-%Y %H:%M') }}</td>
+                            <td>{{ compra.metodo_pago }}</td>
+                            <td>
+                                {% if compra.estado_pago == 'Aprobado' %}
+                                    <span class="badge bg-success">{{ compra.estado_pago }}</span>
+                                {% elif compra.estado_pago == 'En Espera' %}
+                                    <span class="badge bg-warning text-dark">{{ compra.estado_pago }}</span>
+                                {% else %}
+                                    <span class="badge bg-danger">{{ compra.estado_pago }}</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ compra.moneda }}</td>
+                            <td><strong>${{ compra.total }} {{ compra.moneda }}</strong></td>
+                            <td>
+                                {% if compra.metodo_pago == 'Transferencia' and compra.estado_pago == 'En Espera' %}
+                                    <form method="POST" action="{{ url_for('aprobar_transferencia', compra_id=compra.id) }}" class="form-aprobar-transferencia" data-order="{{ compra.buy_order }}">
+                                        <button class="btn btn-success btn-sm" type="submit">Marcar Aprobada</button>
+                                    </form>
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#detalleCompra{{ loop.index }}">
+                                    Ver detalle
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            {% for compra in compras %}
+            <div class="modal fade detalle-compra-modal" id="detalleCompra{{ loop.index }}" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-xl modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Detalle de compra {{ compra.buy_order }}</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="card border-0 detalle-compra-card">
+                                <div class="card-body">
+                                    <div class="row text-start">
+                                        <div class="col-md-6">
+                                            <p class="mb-1"><strong>Orden:</strong> {{ compra.buy_order }}</p>
+                                            <p class="mb-1"><strong>Fecha:</strong> {{ compra.fecha.strftime('%d-%m-%Y %H:%M') }}</p>
+                                            <p class="mb-1"><strong>Metodo:</strong> {{ compra.metodo_pago }}</p>
+                                            <p class="mb-1"><strong>Estado:</strong> {{ compra.estado_pago }}</p>
+                                        </div>
+                                        <div class="col-md-6 text-md-end">
+                                            <p class="mb-1"><strong>Moneda:</strong> {{ compra.moneda }}</p>
+                                            <p class="mb-1"><strong>Subtotal:</strong> ${{ compra.subtotal }} {{ compra.moneda }}</p>
+                                            <p class="mb-1"><strong>Descuento:</strong> -${{ compra.descuento }} {{ compra.moneda }}</p>
+                                            <p class="mb-1"><strong>Total:</strong> ${{ compra.total }} {{ compra.moneda }}</p>
+                                            {% if compra.metodo_pago == 'Transferencia' and compra.estado_pago == 'En Espera' %}
+                                            <form method="POST" action="{{ url_for('aprobar_transferencia', compra_id=compra.id) }}" class="mt-2 form-aprobar-transferencia" data-order="{{ compra.buy_order }}">
+                                                <button class="btn btn-success btn-sm" type="submit">Marcar transferencia como aprobada</button>
+                                            </form>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+
+                                    <div class="table-responsive mt-3">
+                                        <table class="table table-striped align-middle">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>Producto</th>
+                                                    <th>Cantidad</th>
+                                                    <th>Precio Unitario</th>
+                                                    <th>Subtotal</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% if compra.detalle_items %}
+                                                    {% for item in compra.detalle_items %}
+                                                    <tr>
+                                                        <td>{{ item.nombre }}</td>
+                                                        <td>{{ item.cantidad }}</td>
+                                                        <td>${{ item.precio_unitario }} {{ compra.moneda }}</td>
+                                                        <td>${{ item.subtotal }} {{ compra.moneda }}</td>
+                                                    </tr>
+                                                    {% endfor %}
+                                                {% else %}
+                                                    <tr>
+                                                        <td colspan="4" class="text-muted">Sin detalle de productos</td>
+                                                    </tr>
+                                                {% endif %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="alert alert-info">Aun no tienes compras registradas.</div>
+        {% endif %}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.querySelectorAll('.form-aprobar-transferencia').forEach(form => {
+            form.addEventListener('submit', function (e) {
+                const order = this.getAttribute('data-order') || '';
+                const ok = window.confirm(`Vas a marcar la transferencia ${order} como aprobada. Deseas continuar?`);
+                if (!ok) {
+                    e.preventDefault();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

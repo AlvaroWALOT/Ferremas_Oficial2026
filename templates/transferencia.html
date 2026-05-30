@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Pago por Transferencia - FERREMAS</title>
+    <link href="{{ url_for('static', filename='estilo.css') }}" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.9.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark custom-navbar">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{{ url_for('index') }}">
+                <img src="{{ url_for('static', filename='Imagenes Página/Pata.png') }}" alt="Logo" width="300">
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown"
+            aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNavDropdown">
+                <ul class="navbar-nav">
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('index') }}">Inicio</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('tienda') }}">Tienda</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('ver_carrito') }}">Carrito</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('contact') }}">Contacto</a></li>
+                </ul>
+                {% if usuario_logueado %}
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="btn btn-outline-light btn-sm" href="{{ url_for('mi_perfil') }}">Mi Perfil</a>
+                    </li>
+                    <li class="nav-item ms-2">
+                        <form method="POST" action="{{ url_for('logout') }}">
+                            <button class="btn btn-light btn-sm" type="submit">Cerrar sesion</button>
+                        </form>
+                    </li>
+                </ul>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4 mb-5" style="max-width: 900px;">
+        <h2>Pago por Transferencia Bancaria</h2>
+        <p class="text-muted">Realiza la transferencia con los siguientes datos. Usa la referencia para identificar tu compra.</p>
+
+        <div class="row g-4 mt-2">
+            <div class="col-md-7">
+                <div class="card p-3" style="max-width: 100%; border: 1px solid #ddd; background: #fff;">
+                    <h5 class="mb-3">Datos bancarios</h5>
+                    <table class="table table-borderless text-start mb-0">
+                        <tr><th style="width: 220px;">Titular</th><td>{{ datos.nombre }}</td></tr>
+                        <tr><th>RUT</th><td>{{ datos.rut }}</td></tr>
+                        <tr><th>Email</th><td>{{ datos.email }}</td></tr>
+                        <tr><th>Tipo de cuenta</th><td>{{ datos.tipo_cuenta }}</td></tr>
+                        <tr><th>Número de cuenta</th><td>{{ datos.numero_cuenta }}</td></tr>
+                        <tr><th>Banco</th><td>{{ datos.banco }}</td></tr>
+                    </table>
+                </div>
+            </div>
+
+            <div class="col-md-5">
+                <div class="card p-3" style="max-width: 100%; border: 1px solid #ddd; background: #fff;">
+                    <h5 class="mb-3">Resumen del pago</h5>
+                    <p class="mb-1"><strong>Referencia:</strong> {{ referencia }}</p>
+                    <p class="mb-1"><strong>Subtotal:</strong> ${{ subtotal }} {{ moneda }}</p>
+                    <p class="mb-1"><strong>Descuento:</strong> -${{ descuento }} {{ moneda }}</p>
+                    <p class="mb-1"><strong>Total a transferir:</strong> ${{ total }} {{ moneda }}</p>
+                    {% if moneda != 'CLP' %}
+                    <p class="mb-1 text-muted"><strong>Equivalente CLP:</strong> ${{ total_clp }} CLP</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="alert alert-warning mt-4 text-start">
+            <strong>Importante:</strong> envia el comprobante de transferencia a {{ datos.email }} indicando la referencia {{ referencia }}.
+        </div>
+
+        <div class="alert alert-info text-start">
+            <strong>Estado inicial:</strong> En Espera.
+            Si no se confirma el pago dentro de 1 hora, el estado cambiara automaticamente a Rechazado en el historial.
+        </div>
+
+        <a href="{{ url_for('ver_carrito') }}" class="btn btn-primary">Volver al carrito</a>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
