@@ -5,14 +5,17 @@ import sys
 import pytest
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope='function')
 def backend_app(tmp_path_factory):
     tmp_dir = tmp_path_factory.mktemp('ferremas_db')
     db_path = tmp_dir / 'ferremas_test.db'
     os.environ['DATABASE_URL'] = f"sqlite:///{db_path}"
 
-    if 'backend.app' in sys.modules:
-        del sys.modules['backend.app']
+    for module_name in list(sys.modules):
+        if module_name == 'backend.app' or module_name == 'backend' or module_name.startswith('backend.'):
+            del sys.modules[module_name]
+        if module_name in ('models', 'config'):
+            del sys.modules[module_name]
 
     backend_app = importlib.import_module('backend.app')
     importlib.reload(backend_app)
