@@ -9,6 +9,7 @@ class Usuario(db.Model):
     username = db.Column(db.String(50), unique=True, nullable=False, index=True)
     email = db.Column(db.String(120), unique=True, nullable=False, index=True)
     password_hash = db.Column(db.String(255), nullable=False)
+    rol = db.Column(db.String(20), nullable=False, default='cliente')
     creado_en = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
 class Producto(db.Model):
@@ -38,6 +39,9 @@ class CompraHistorial(db.Model):
     buy_order = db.Column(db.String(50), nullable=False)
     metodo_pago = db.Column(db.String(20), nullable=False, default='Tarjeta')
     estado_pago = db.Column(db.String(30), nullable=False, default='En Espera')
+    estado_pedido = db.Column(db.String(30), nullable=False, default='Pendiente')
+    metodo_entrega = db.Column(db.String(30), nullable=False, default='Retiro en Tienda')
+    direccion_entrega = db.Column(db.String(255))
     moneda = db.Column(db.String(10), nullable=False, default='CLP')
     tasa_cambio = db.Column(db.Float, nullable=False, default=1.0)
     subtotal = db.Column(db.Integer, nullable=False, default=0)
